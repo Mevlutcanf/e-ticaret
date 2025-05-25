@@ -1,0 +1,1 @@
+[{"Id":1,"Email":"test@mail.com","Password":"444","FullName":"test","IsAdmin":false},{"Id":2,"Email":"admin@admin.com","Password":"admin123","FullName":"Admin","IsAdmin":true},{"Id":3,"Email":"deneme@mail.com","Password":"2005","FullName":"mevl\u00FCt","IsAdmin":false}]

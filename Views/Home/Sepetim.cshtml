@@ -1,0 +1,82 @@
+@model List<e_ticaret.Models.CartItem>
+@{
+    ViewData["Title"] = "Sepetim";
+}
+
+<style>
+    .page-content {
+        min-height: calc(100vh - 180px);
+        /* footer ve navbar yüksekliğini çıkarıyoruz */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .content-wrapper {
+        flex: 1;
+    }
+</style>
+
+<div class="page-content">
+    <div class="content-wrapper">
+        <div class="container my-5">
+            <h2>Sepetim</h2>
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info">Sepetiniz boş.</div>
+            }
+            else
+            {
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Ürün</th>
+                            <th>Açıklama</th>
+                            <th>Adet</th>
+                            <th>Birim Fiyat</th>
+                            <th>Toplam</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="align-middle">
+                                    <div class="d-flex align-items-center">
+                                        <img src="@item.Product?.ImageUrl" class="img-thumbnail me-3"
+                                            style="width: 80px; height: 80px; object-fit: cover;" />
+                                        <strong>@item.Product?.Name</strong>
+                                    </div>
+                                </td>
+                                <td>@item.Product?.Description</td>
+                                <td>@item.Quantity</td>
+                                <td>₺@(item.Product?.Price)</td>
+                                <td>₺@(item.Product != null ? item.Product.Price * item.Quantity : 0)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div class="text-end fw-bold">
+                    @{
+                        var total = Model.Sum(x => x.Product != null ? x.Product.Price * x.Quantity : 0);
+                    }
+                    Toplam: ₺@total
+                </div>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-left me-2"></i>Alışverişe Devam Et
+                        </a>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="mb-3">
+                            <h3>Toplam: ₺@total</h3>
+                        </div>
+                        <a href="@Url.Action("OdemeYap", "Home")" class="btn btn-success btn-lg">
+                            <i class="bi bi-credit-card me-2"></i>Ödemeye Geç
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

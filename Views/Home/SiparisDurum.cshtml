@@ -1,0 +1,65 @@
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model e_ticaret.Models.Order
+@{
+    ViewData["Title"] = "Sipariş Durumu";
+}
+
+<div class="container my-5">
+    <div class="card">
+        <div class="card-body">
+            <h3 class="card-title">Sipariş Durumu</h3>
+            <div class="alert alert-success">
+                Siparişiniz başarıyla oluşturuldu!
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Sipariş Bilgileri</h5>
+                    <p><strong>Sipariş No:</strong> @Model.OrderNumber</p>
+                    <p><strong>Tarih:</strong> @Model.OrderDate.ToString("dd.MM.yyyy HH:mm")</p>
+                    <p><strong>Durum:</strong> @Model.OrderStatus</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Teslimat Adresi</h5>
+                    <p>@Model.Address</p>
+                    <p>@Model.City, @Model.PostalCode</p>
+                </div>
+            </div>
+
+            <h5>Sipariş Özeti</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Ürün</th>
+                            <th>Adet</th>
+                            <th>Fiyat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>@item.Product?.Name</td>
+                                <td>@item.Quantity</td>
+                                <td>₺@(item.Product?.Price * item.Quantity)</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2"><strong>Toplam</strong></td>
+                            <td><strong>₺@Model.TotalAmount</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="@Url.Action("Index", "Home")" class="btn btn-primary">
+                    Alışverişe Devam Et
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

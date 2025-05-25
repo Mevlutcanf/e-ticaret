@@ -1,0 +1,175 @@
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model List<e_ticaret.Models.CartItem>
+@{
+    ViewData["Title"] = "Ödeme";
+    var total = Model.Sum(x => x.Product != null ? x.Product.Price * x.Quantity : 0);
+}
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Kredi kartı numarası formatı: 1234 5678 9012 3456
+            $('#cardNumber').mask('0000 0000 0000 0000');
+
+            // Son kullanma tarihi formatı: MM/YY
+            $('#expiryDate').mask('00/00', {
+                placeholder: "AA/YY"
+            });
+
+            // CVV formatı: 000 veya 0000
+            $('#cvv').mask('0000');
+
+            // Posta kodu formatı: 00000
+            $('#postalCode').mask('00000');
+
+            // Kart numarası girildikçe kartın türünü belirle
+            $('#cardNumber').on('keyup', function () {
+                var number = $(this).val().replace(/\s/g, '');
+                var cardType = getCardType(number);
+                $('#cardType').text(cardType);
+            });
+
+            // Form submit kontrolü
+            $('form').on('submit', function (e) {
+                var cardNumber = $('#cardNumber').val().replace(/\s/g, '');
+                var expiry = $('#expiryDate').val().split('/');
+
+                if (expiry.length === 2) {
+                    var month = parseInt(expiry[0]);
+                    var year = parseInt('20' + expiry[1]); // '23' -> 2023
+                    var now = new Date();
+                    var currentYear = now.getFullYear();
+                    var currentMonth = now.getMonth() + 1; // JavaScript'te aylar 0'dan başlar
+
+                    if (month < 1 || month > 12) {
+                        alert('Geçersiz ay bilgisi! Lütfen 1-12 arasında bir değer girin.');
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+                        alert('Kartınızın son kullanma tarihi geçmiş! Lütfen kontrol edin.');
+                        e.preventDefault();
+                        return false;
+                    }
+                } else {
+                    alert('Lütfen son kullanma tarihini AA/YY formatında girin.');
+                    e.preventDefault();
+                    return false;
+                }
+
+                if (!isValidCardNumber(cardNumber)) {
+                    alert('Geçersiz kredi kartı numarası!');
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+
+        function getCardType(number) {
+            var re = {
+                visa: /^4/,
+                mastercard: /^5[1-5]/,
+                amex: /^3[47]/
+            };
+
+            if (re.visa.test(number)) return 'Visa';
+            if (re.mastercard.test(number)) return 'MasterCard';
+            if (re.amex.test(number)) return 'American Express';
+            return 'Bilinmeyen Kart';
+        }
+
+        function isValidCardNumber(number) {
+            var sum = 0;
+            var isEven = false;
+
+            // Luhn Algorithm
+            for (var i = number.length - 1; i >= 0; i--) {
+                var digit = parseInt(number[i]);
+                if (isEven) {
+                    digit *= 2;
+                    if (digit > 9) digit -= 9;
+                }
+                sum += digit;
+                isEven = !isEven;
+            }
+
+            return sum % 10 === 0;
+        }
+    </script>
+}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">Ödeme Bilgileri</h3>
+                    <div id="cardType" class="mb-3 text-primary fw-bold"></div>
+                    <form method="post" asp-controller="Home" asp-action="OdemeYap">
+                        <h4 class="mb-3">Teslimat Adresi</h4>
+                        <div class="mb-3">
+                            <label class="form-label">Adres</label>
+                            <textarea class="form-control" name="address" rows="3" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Şehir</label>
+                                <input type="text" class="form-control" name="city" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Posta Kodu</label>
+                                <input type="text" id="postalCode" class="form-control" name="postalCode" required>
+                            </div>
+                        </div>
+                        <h4 class="mb-3 mt-4">Ödeme Bilgileri</h4>
+                        <div class="mb-3">
+                            <label class="form-label">Kart Üzerindeki İsim</label>
+                            <input type="text" class="form-control" name="cardName" pattern="[A-Za-z ]{6,50}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kart Numarası</label>
+                            <input type="text" id="cardNumber" class="form-control" name="cardNumber"
+                                placeholder="1234 5678 9012 3456" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Son Kullanma Tarihi</label>
+                                <input type="text" id="expiryDate" class="form-control" name="expiryDate"
+                                    placeholder="AA/YY" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">CVV</label>
+                                <input type="text" id="cvv" class="form-control" name="cvv" placeholder="000"
+                                    maxlength="4" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100">Ödemeyi Tamamla</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Sipariş Özeti</h4>
+                    <hr>
+                    @foreach (var urun in Model)
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>@urun.Product?.Name x @urun.Quantity</span>
+                            <span>₺@(urun.Product != null ? urun.Product.Price * urun.Quantity : 0)</span>
+                        </div>
+                    }
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Toplam</strong>
+                        <strong>₺@total</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

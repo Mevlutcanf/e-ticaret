@@ -1,0 +1,47 @@
+@model List<e_ticaret.Models.Product>
+@{
+    ViewData["Title"] = "Ürünler";
+}
+
+<div class="container my-5">
+    <h1 class="mb-4">Tüm Ürünler</h1>
+    
+    <div class="row g-4">
+        @foreach (var urun in Model)
+        {
+            <div class="col-md-3 mb-4">
+                <div class="card product-card h-100">
+                    <a href="@Url.Action("UrunDetay", "Home", new { id = urun.Id })" class="text-decoration-none">
+                        <img src="@urun.ImageUrl" class="card-img-top" style="height: 200px; object-fit: cover;" alt="@urun.Name">
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <a href="@Url.Action("UrunDetay", "Home", new { id = urun.Id })" class="text-decoration-none text-dark">
+                            <h5 class="card-title">@urun.Name</h5>
+                        </a>
+                        <p class="card-text">@urun.Description</p>
+                        <div class="text-warning mb-2">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <i class="bi bi-star-fill @(i <= urun.Rating ? "text-warning" : "text-secondary")"></i>
+                            }
+                            <small class="text-muted ms-1">(@urun.Rating.ToString("0.0"))</small>
+                        </div>
+                        <div class="mt-auto">
+                            <div class="text-muted mb-2">Stok: @urun.StockQuantity</div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary">₺@urun.Price</span>
+                                <form asp-action="SepeteEkle" asp-controller="Home" method="post" class="m-0 p-0">
+                                    <input type="hidden" name="id" value="@urun.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary" 
+                                            @(urun.StockQuantity < 1 ? "disabled" : "")>
+                                        @(urun.StockQuantity < 1 ? "Stokta Yok" : "Sepete Ekle")
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

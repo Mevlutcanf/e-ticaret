@@ -1,0 +1,66 @@
+@model List<e_ticaret.Models.Order>
+@{
+    ViewData["Title"] = "Siparişlerim";
+}
+
+<style>
+    .page-content {
+        min-height: calc(100vh - 180px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .content-wrapper {
+        flex: 1;
+    }
+</style>
+
+<div class="page-content">
+    <div class="content-wrapper">
+        <div class="container my-5">
+            <h2 class="mb-4">Siparişlerim</h2>
+
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info">Henüz siparişiniz bulunmuyor.</div>
+            }
+            else
+            {
+                @foreach (var siparis in Model)
+                {
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Sipariş No:</strong> @siparis.OrderNumber
+                                <span class="ms-3">@siparis.OrderDate.ToString("dd.MM.yyyy HH:mm")</span>
+                            </div>
+                            <span class="badge bg-primary">@siparis.OrderStatus</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    @foreach (var item in siparis.Items)
+                                    {
+                                        <div class="d-flex align-items-center mb-2">
+                                            <img src="@item.Product?.ImageUrl" style="width: 50px; height: 50px; object-fit: cover;"
+                                                class="me-2">
+                                            <span>@item.Product?.Name x @item.Quantity</span>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="col-md-4">
+                                    <p><strong>Teslimat Adresi:</strong><br>
+                                        @siparis.Address<br>
+                                        @siparis.City, @siparis.PostalCode</p>
+                                    <p><strong>Tahmini Teslimat:</strong><br>
+                                        @siparis.EstimatedDeliveryDate.ToString("dd.MM.yyyy")</p>
+                                    <p><strong>Toplam:</strong> ₺@siparis.TotalAmount</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

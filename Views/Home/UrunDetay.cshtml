@@ -1,0 +1,41 @@
+@model e_ticaret.Models.Product
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-6">
+            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name">
+        </div>
+        <div class="col-md-6">
+            <h1 class="mb-4">@Model.Name</h1>
+            <div class="mb-3">
+                @for (var i = 1; i <= 5; i++)
+                {
+                    <i class="bi bi-star-fill @(i <= Model.Rating ? "text-warning" : "text-secondary")"></i>
+                }
+                <span class="ms-2 text-muted">(@Model.Rating.ToString("0.0"))</span>
+            </div>
+            <p class="lead mb-4">@Model.Description</p>
+            <h3 class="text-primary mb-4">₺@Model.Price</h3>
+            <div class="d-flex align-items-center mb-4">
+                <span class="me-3">Stok Durumu:
+                    <span class="@(Model.StockQuantity > 0 ? "text-success" : "text-danger")">
+                        @(Model.StockQuantity > 0 ? $"{Model.StockQuantity} adet" : "Stokta yok")
+                    </span>
+                </span>
+            </div>
+            @if (Model.StockQuantity > 0)
+            {
+                <form asp-action="SepeteEkle" asp-controller="Home" method="post" class="d-inline">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-cart-plus me-2"></i>Sepete Ekle
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+                            

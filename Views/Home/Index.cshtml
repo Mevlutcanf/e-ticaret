@@ -1,0 +1,130 @@
+﻿@model List<e_ticaret.Models.Product>
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+@section Styles {
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+
+        .product-card {
+            transition: box-shadow .2s;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .hero-header {
+            background: linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            transition: all 0.3s ease;
+        }
+
+        .hero-btn:hover {
+            background: white;
+            color: #4158D0;
+        }
+    </style>
+}
+
+<header class="hero-header mb-5">
+    <div class="container">
+        <div class="hero-content py-5 text-white">
+            <h1 class="display-3 fw-bold mb-4">Tekno Market</h1>
+            <p class="col-md-8 fs-4 mb-4">Teknolojinin En İyi Ürünleri, En İyi Fiyatlarla Sizlerle</p>
+            <div class="d-flex gap-3">
+                <a class="btn btn-lg hero-btn text-white" href="#urunler">Ürünleri Keşfet</a>
+                <a class="btn btn-lg btn-light" href="/Home/Sepetim">
+                    <i class="bi bi-cart3 me-2"></i>Sepete Git
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <h2 class="mb-4">Popüler Ürünler</h2>
+    <div class="row g-4">
+        @foreach (var urun in Model)
+        {
+            <div class="col-md-3 mb-4">
+                <div class="card product-card h-100">
+                    <a href="@Url.Action("UrunDetay", "Home", new { id = urun.Id })" class="text-decoration-none">
+                        <img src="@urun.ImageUrl" class="card-img-top" style="height: 200px; object-fit: cover;" alt="@urun.Name">
+                    </a>
+                    <div class="card-body d-flex flex-column">
+                        <a href="@Url.Action("UrunDetay", "Home", new { id = urun.Id })" class="text-decoration-none text-dark">
+                            <h5 class="card-title">@urun.Name</h5>
+                        </a>
+                        <p class="card-text">@urun.Description</p>
+                        <div class="text-warning mb-2">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <i class="bi bi-star-fill @(i <= urun.Rating ? "text-warning" : "text-secondary")"></i>
+                            }
+                            <small class="text-muted ms-1">(@urun.Rating.ToString("0.0"))</small>
+                        </div>
+                        <div class="mt-auto">
+                            <div class="text-muted mb-2">Stok: @urun.StockQuantity</div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary">₺@urun.Price</span>
+                                <form asp-action="SepeteEkle" asp-controller="Home" method="post" class="m-0 p-0">
+                                    <input type="hidden" name="id" value="@urun.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary" 
+                                            @(urun.StockQuantity < 1 ? "disabled" : "")>
+                                        @(urun.StockQuantity < 1 ? "Stokta Yok" : "Sepete Ekle")
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Kampanya/duyuru alanı -->
+    <div class="alert alert-success mt-5 text-center" role="alert">
+        <strong>Bahar İndirimi!</strong> Tüm ürünlerde %20'ye varan indirim fırsatını kaçırmayın!
+    </div>
+
+    <!-- İletişim bölümü -->
+    <div class="card mt-4 mb-5">
+        <div class="card-body">
+            <h4 class="card-title">Bize Ulaşın</h4>
+            <p class="card-text">Sorularınız için <a href="mailto:info@eticaret.com">info@eticaret.com</a> adresine
+                mail atabilirsiniz.</p>
+        </div>
+    </div>
+</main>
+

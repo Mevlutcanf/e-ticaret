@@ -1,0 +1,253 @@
+﻿@using e_ticaret.Data
+@using e_ticaret.Extensions
+@using e_ticaret.Models
+
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - Tekno Market</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+
+        .navbar {
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .main-content {
+            margin-top: 56px;
+        }
+
+        .ribbon {
+            width: 150px;
+            height: 150px;
+            overflow: hidden;
+            position: absolute;
+        }
+
+        .ribbon span {
+            position: absolute;
+            display: block;
+            width: 160px;
+            padding: 5px 0;
+            background-color: #ff0000;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, .1);
+            color: #fff;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, .2);
+            text-align: center;
+        }
+
+        .ribbon-top-right {
+            top: -10px;
+            right: -10px;
+        }
+
+        .ribbon-top-right span {
+            left: -10px;
+            top: 30px;
+            transform: rotate(45deg);
+        }
+
+        .ad-sidebar {
+            position: sticky;
+            top: 80px;
+            /* Navbar'dan sonra başlaması için */
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .ad-card {
+            margin-bottom: 1.5rem;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideIn 0.5s forwards;
+        }
+
+        @* Razor'da @ işareti kullanmak için @@ kullanıyoruz *@
+        @@keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+    @RenderSection("Styles", required: false)
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">Tekno Market</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index">Ana Sayfa</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Ürünler</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Sepetim">
+                            <i class="bi bi-cart3"></i> Sepetim
+                        </a>
+                    </li>
+                    @if (Context.Session.GetString("UserId") != null)
+                    {
+                        var userId = Context.Session.GetString("UserId");
+                        var user = userId != null ? UserRepository.GetById(int.Parse(userId)) : null;
+
+                        @if (user?.IsAdmin == true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Admin" asp-action="Index">
+                                    <i class="bi bi-gear-fill"></i> Admin Panel
+                                </a>
+                            </li>
+                        }
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> @(user?.FullName ?? "Kullanıcı")
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Profil</a></li>
+                                <li><a class="dropdown-item" asp-controller="Home"
+                                        asp-action="Siparislerim">Siparişlerim</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Çıkış Yap</a></li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Account" asp-action="Login">
+                                <i class="bi bi-person"></i> Giriş Yap
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Account" asp-action="Register">
+                                <i class="bi bi-person-plus"></i> Kayıt Ol
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sol Reklam Alanı - Sadece ana sayfada göster -->
+            @if (ViewContext.RouteData.Values["controller"].ToString() == "Home" && 
+                 ViewContext.RouteData.Values["action"].ToString() == "Index")
+            {
+                <div class="col-md-2 d-none d-lg-block">
+                    <div class="ad-sidebar">
+                        <div class="card border-primary ad-card">
+                            <div class="card-body text-center">
+                                <h6 class="card-title text-primary">Özel Fırsat!</h6>
+                                <small class="text-muted d-block mb-2">Seçili Ürünlerde</small>
+                                <span class="display-6 text-danger">%20</span>
+                                <small class="d-block text-muted mt-2">İndirim</small>
+                            </div>
+                        </div>
+                        <div class="card bg-light ad-card">
+                            <div class="card-body text-center p-2">
+                                <i class="bi bi-truck text-success"></i>
+                                <small class="d-block text-muted">500₺ Üzeri Kargo Bedava</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Ana İçerik - Sayfa durumuna göre genişlik ayarla -->
+            <div class="@(ViewContext.RouteData.Values["controller"].ToString() == "Home" && 
+                         ViewContext.RouteData.Values["action"].ToString() == "Index" ? "col-md-8" : "col-md-12")">
+                @RenderBody()
+            </div>
+
+            <!-- Sağ Sepet Özeti - Sadece ana sayfada ve giriş yapmış kullanıcılara göster -->
+            @if (Context.Session.GetString("UserId") != null && 
+                 ViewContext.RouteData.Values["controller"].ToString() == "Home" && 
+                 ViewContext.RouteData.Values["action"].ToString() == "Index")
+            {
+                <div class="col-md-2 d-none d-lg-block">
+                    <div class="position-sticky" style="top: 80px;">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <i class="bi bi-cart3"></i> Sepetim
+                            </div>
+                            <div class="card-body">
+                                @{
+                                    var cart = Context.Session.GetObject<List<CartItem>>("cart");
+                                    var total = cart?.Sum(x => x.Product != null ? x.Product.Price * x.Quantity : 0) ?? 0;
+                                }
+                                @if (cart == null || !cart.Any())
+                                {
+                                    <p class="text-muted text-center mb-0">Sepetiniz boş</p>
+                                }
+                                else
+                                {
+                                    foreach (var item in cart)
+                                    {
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small>@item.Product?.Name x @item.Quantity</small>
+                                            <small class="text-primary">₺@(item.Product != null ? item.Product.Price * item.Quantity : 0)</small>
+                                        </div>
+                                    }
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Toplam:</strong>
+                                        <strong class="text-primary">₺@total</strong>
+                                    </div>
+                                    <a href="@Url.Action("Sepetim", "Home")" class="btn btn-primary btn-sm w-100 mt-3">
+                                        Sepete Git
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <footer class="bg-primary text-white py-3 mt-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    &copy; @DateTime.Now.Year Tekno Market. Tüm hakları saklıdır.
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <small>MF Software tarafından geliştirilmektedir</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+
+</html>

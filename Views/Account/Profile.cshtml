@@ -1,0 +1,57 @@
+@model e_ticaret.Models.User
+@using e_ticaret.Data
+@{
+    ViewData["Title"] = "Profil";
+}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title mb-4">Profil Bilgileri</h3>
+                    @if (TempData["Message"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["Message"]</div>
+                    }
+                    <form asp-action="UpdateProfile" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Ad Soyad</label>
+                            <input type="text" class="form-control" name="FullName" value="@Model.FullName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="Email" value="@Model.Email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Yeni Şifre (Boş bırakılabilir)</label>
+                            <input type="password" class="form-control" name="Password">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h4>Son Siparişleriniz</h4>
+                    <hr>
+                    @{
+                        var userOrders = OrderRepository.GetUserOrders(Model.Id.ToString()).Take(5);
+                        
+                        foreach (var order in userOrders)
+                        {
+                            <div class="mb-2">
+                                <small class="text-muted">@order.OrderDate.ToString("dd.MM.yyyy")</small>
+                                <br>
+                                Sipariş No: @order.OrderNumber
+                                <span class="badge bg-primary float-end">@order.OrderStatus</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

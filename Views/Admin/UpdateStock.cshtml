@@ -1,0 +1,33 @@
+@model e_ticaret.Models.Product
+@{
+    ViewData["Title"] = "Stok Güncelle";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Stok Güncelle - @Model.Name</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UpdateStock" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label class="form-label">Mevcut Stok</label>
+                            <input type="text" class="form-control" value="@Model.StockQuantity" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Yeni Stok Miktarı</label>
+                            <input type="number" name="quantity" class="form-control" required>
+                        </div>
+                        <div class="text-end">
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">İptal</a>
+                            <button type="submit" class="btn btn-primary">Güncelle</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
