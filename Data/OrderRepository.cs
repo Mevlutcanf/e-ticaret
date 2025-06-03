@@ -1,75 +1,148 @@
-using System.Text.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using e_ticaret.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace e_ticaret.Data
 {
-    public static class OrderRepository
+    public class OrderRepository
     {
-        private static string OrdersFilePath = "orders.json";
-        private static List<Order> _orders = new();
+        private readonly ApplicationDbContext _context;
 
-        static OrderRepository()
+        public OrderRepository(ApplicationDbContext context)
         {
-            LoadOrders();
+            _context = context;
         }
 
-        private static void LoadOrders()
+        public List<Order> GetAll()
         {
-            if (File.Exists(OrdersFilePath))
+            return _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .ToList();
+        }
+
+        public Order? GetById(int id)
+        {
+            return _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .FirstOrDefault(o => o.Id == id);
+        }
+
+        public List<Order> GetUserOrders(int userId)
+        {
+            return _context.Orders
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.OrderDate)
+                .ToList();
+        }
+
+        public void AddOrder(Order order)
+        {
+            order.OrderNumber = GenerateOrderNumber();
+            order.OrderDate = DateTime.Now;
+            order.OrderStatus = "Hazırlanıyor";
+            order.EstimatedDeliveryDate = DateTime.Now.AddDays(3);
+
+            // Detach existing products from the context
+            foreach (var item in order.Items)
             {
-                var json = File.ReadAllText(OrdersFilePath);
-                _orders = JsonSerializer.Deserialize<List<Order>>(json) ?? new List<Order>();
+                var product = _context.Products.Find(item.ProductId);
+                if (product != null)
+                {
+                    item.Product = product;
+                    product.StockQuantity -= item.Quantity;
+                    _context.Entry(product).State = EntityState.Modified;
+                }
+            }
+
+            _context.Orders.Add(order);
+            _context.SaveChanges();
+        }
+
+        public void Update(Order order)
+        {
+            _context.Orders.Update(order);
+            _context.SaveChanges();
+        }
+
+        public void Delete(int id)
+        {
+            var order = _context.Orders.Find(id);
+            if (order != null)
+            {
+                _context.Orders.Remove(order);
+                _context.SaveChanges();
             }
         }
 
-        private static void SaveOrders()
+        private string GenerateOrderNumber()
         {
-            var json = JsonSerializer.Serialize(_orders);
-            File.WriteAllText(OrdersFilePath, json);
+            return Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
         }
 
-        public static void AddOrder(Order order)
+        public List<Order> GetAllOrders()
         {
-            _orders.Add(order);
-            SaveOrders();
+            return _context.Orders
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .Include(o => o.User)
+                .OrderByDescending(o => o.OrderDate)
+                .ToList();
         }
 
-        public static List<Order> GetUserOrders(string userId)
+        public Order? GetOrderById(int id)
         {
-            return _orders.Where(o => o.UserId == userId)
-                         .OrderByDescending(o => o.OrderDate)
-                         .ToList();
+            return _context.Orders
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .Include(o => o.User)
+                .FirstOrDefault(o => o.Id == id);
         }
 
-        public static List<Order> GetAllOrders()
-        {
-            return _orders.OrderByDescending(o => o.OrderDate).ToList();
-        }
-
-        public static Order? GetOrderById(int id)
-        {
-            return _orders.FirstOrDefault(o => o.Id == id);
-        }
-
-        public static void UpdateStatus(int id, string status)
+        public void UpdateStatus(int id, string status)
         {
             var order = GetOrderById(id);
             if (order != null)
             {
                 order.OrderStatus = status;
-                SaveOrders();
+                _context.SaveChanges();
             }
         }
 
-        public static void UpdateOrder(Order updatedOrder)
+        public void UpdateOrder(Order updatedOrder)
         {
             var existingOrder = GetOrderById(updatedOrder.Id);
             if (existingOrder != null)
             {
                 existingOrder.OrderStatus = updatedOrder.OrderStatus;
                 existingOrder.DeliveryDate = updatedOrder.DeliveryDate;
-                SaveOrders();
+                _context.SaveChanges();
             }
+        }
+
+        public void ClearAllOrders()
+        {
+            var orders = _context.Orders.ToList();
+            _context.Orders.RemoveRange(orders);
+            _context.SaveChanges();
+        }
+
+        public List<Order> GetOrdersByDateRange(DateTime startDate, DateTime endDate)
+        {
+            return _context.Orders
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Product)
+                .Include(o => o.User)
+                .Where(o => o.DeliveryDate >= startDate && o.DeliveryDate <= endDate)
+                .OrderByDescending(o => o.OrderDate)
+                .ToList();
         }
     }
 }

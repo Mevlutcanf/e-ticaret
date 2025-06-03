@@ -3,64 +3,100 @@
     ViewData["Title"] = "Siparişlerim";
 }
 
-<style>
-    .page-content {
-        min-height: calc(100vh - 180px);
-        display: flex;
-        flex-direction: column;
+<div class="container mt-5 pt-4">
+    <h2 class="mb-4">Siparişlerim</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-box me-2"></i>Henüz siparişiniz bulunmuyor.
+            <a href="@Url.Action("Index")" class="alert-link">Alışverişe başlayın</a>
+        </div>
     }
-
-    .content-wrapper {
-        flex: 1;
-    }
-</style>
-
-<div class="page-content">
-    <div class="content-wrapper">
-        <div class="container my-5">
-            <h2 class="mb-4">Siparişlerim</h2>
-
-            @if (!Model.Any())
+    else
+    {
+        <div class="row">
+            @foreach (var order in Model.OrderByDescending(o => o.OrderDate))
             {
-                <div class="alert alert-info">Henüz siparişiniz bulunmuyor.</div>
-            }
-            else
-            {
-                @foreach (var siparis in Model)
-                {
-                    <div class="card mb-4">
+                <div class="col-md-12 mb-4">
+                    <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <div>
-                                <strong>Sipariş No:</strong> @siparis.OrderNumber
-                                <span class="ms-3">@siparis.OrderDate.ToString("dd.MM.yyyy HH:mm")</span>
+                                <h5 class="mb-0">Sipariş #@order.Id</h5>
+                                <small class="text-muted">@order.OrderDate.ToString("dd.MM.yyyy HH:mm")</small>
                             </div>
-                            <span class="badge bg-primary">@siparis.OrderStatus</span>
+                            <div class="text-end">
+                                <span class="badge bg-@(order.OrderStatus == "Teslim Edildi" ? "success" : 
+                                                     order.OrderStatus == "Kargoya Verildi" ? "info" : 
+                                                     order.OrderStatus == "Hazırlanıyor" ? "warning" : "primary")">
+                                    @order.OrderStatus
+                                </span>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-8">
-                                    @foreach (var item in siparis.Items)
-                                    {
-                                        <div class="d-flex align-items-center mb-2">
-                                            <img src="@item.Product?.ImageUrl" style="width: 50px; height: 50px; object-fit: cover;"
-                                                class="me-2">
-                                            <span>@item.Product?.Name x @item.Quantity</span>
-                                        </div>
-                                    }
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Ürün</th>
+                                                    <th>Adet</th>
+                                                    <th class="text-end">Fiyat</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in order.Items)
+                                                {
+                                                    <tr>
+                                                        <td>@item.ProductName</td>
+                                                        <td>@item.Quantity</td>
+                                                        <td class="text-end">@($"{item.Price:F2}") ₺</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <td colspan="2" class="text-end"><strong>Toplam:</strong></td>
+                                                    <td class="text-end"><strong>@($"{order.TotalAmount:F2}") ₺</strong></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <p><strong>Teslimat Adresi:</strong><br>
-                                        @siparis.Address<br>
-                                        @siparis.City, @siparis.PostalCode</p>
-                                    <p><strong>Tahmini Teslimat:</strong><br>
-                                        @siparis.EstimatedDeliveryDate.ToString("dd.MM.yyyy")</p>
-                                    <p><strong>Toplam:</strong> ₺@siparis.TotalAmount</p>
+                                    <h6>Teslimat Adresi</h6>
+                                    <p class="mb-0">@order.ShippingAddress</p>
+                                    <hr>
+                                    <div class="d-grid">
+                                        <a href="@Url.Action("SiparisDurum", new { id = order.Id })" 
+                                           class="btn btn-outline-primary">
+                                            <i class="fas fa-info-circle me-2"></i>Sipariş Detayı
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                }
+                </div>
             }
         </div>
-    </div>
+    }
 </div>
+
+@section Styles {
+    <style>
+        .card-header {
+            background-color: #f8f9fa;
+        }
+        
+        .table-sm td, .table-sm th {
+            padding: 0.5rem;
+        }
+        
+        .badge {
+            font-size: 0.875rem;
+            padding: 0.5em 1em;
+        }
+    </style>
+}

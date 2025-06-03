@@ -10,22 +10,38 @@
             <div class="card">
                 <div class="card-body">
                     <h3 class="card-title text-center mb-4">Kayıt Ol</h3>
+                    
+                    @if (TempData["Message"] != null)
+                    {
+                        <div class="alert alert-success">
+                            @TempData["Message"]
+                        </div>
+                    }
+
                     <form asp-action="Register" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
                         <div class="mb-3">
-                            <label class="form-label">Ad Soyad</label>
-                            <input type="text" name="FullName" class="form-control" required>
+                            <label asp-for="FullName" class="form-label">Ad Soyad</label>
+                            <input asp-for="FullName" class="form-control" required>
+                            <span asp-validation-for="FullName" class="text-danger"></span>
                         </div>
+                        
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="Email" class="form-control" required>
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" required>
+                            <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
+                        
                         <div class="mb-3">
-                            <label class="form-label">Şifre</label>
-                            <input type="password" name="Password" class="form-control" required>
+                            <label asp-for="Password" class="form-label">Şifre</label>
+                            <input asp-for="Password" type="password" class="form-control" required>
+                            <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
+                        
                         <button type="submit" class="btn btn-primary w-100">Kayıt Ol</button>
                     </form>
+                    
                     <div class="text-center mt-3">
                         <a asp-action="Login">Zaten hesabın var mı? Giriş yap</a>
                     </div>
@@ -34,3 +50,7 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

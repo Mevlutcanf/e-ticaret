@@ -1,0 +1,112 @@
+@model e_ticaret.Models.Product
+
+@{
+    ViewData["Title"] = "Ürün Detayları";
+}
+
+<div class="container-fluid py-4" style="margin-top: 70px;">
+    <div class="admin-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">Ürün Detayları</h5>
+            <div class="d-flex gap-2">
+                <button class="btn btn-modern" onclick="history.back()">
+                    <i class="fas fa-arrow-left me-2"></i>Geri Dön
+                </button>
+                <button class="btn btn-modern" onclick="editProduct(@Model.Id)">
+                    <i class="fas fa-edit me-2"></i>Düzenle
+                </button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="product-image-container">
+                    <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid rounded">
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="product-details">
+                    <h4>@Model.Name</h4>
+                    <p class="text-muted">@Model.Description</p>
+                    
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <span class="label">Fiyat:</span>
+                            <span class="value">@Model.Price.ToString("C")</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Stok:</span>
+                            <span class="value @(Model.StockQuantity < 5 ? "text-danger" : "text-success")">
+                                @Model.StockQuantity adet
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Kategori:</span>
+                            <span class="value">@Model.Category</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Durum:</span>
+                            <span class="value">
+                                @if (Model.StockQuantity > 0)
+                                {
+                                    <span class="badge bg-success">Stokta</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Tükendi</span>
+                                }
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .product-image-container {
+            background: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .product-details {
+            padding: 1rem;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .detail-item .label {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .detail-item .value {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function editProduct(id) {
+            // Ürün düzenleme modalını aç
+            $('#editProductModal').modal('show');
+        }
+    </script>
+} 

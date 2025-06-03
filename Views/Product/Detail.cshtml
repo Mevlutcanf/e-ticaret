@@ -1,0 +1,253 @@
+@model e_ticaret.Models.Product
+
+<div class="container mt-4">
+    <div class="product-detail">
+        <div class="row">
+            <!-- Product Image -->
+            <div class="col-md-6">
+                <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid rounded">
+            </div>
+            
+            <!-- Product Info -->
+            <div class="col-md-6">
+                <h1 class="mb-4">@Model.Name</h1>
+                
+                <!-- Rating -->
+                <div class="rating mb-3">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= (double)Model.Rating)
+                        {
+                            <i class="fas fa-star"></i>
+                        }
+                        else if (i - 0.5 <= (double)Model.Rating)
+                        {
+                            <i class="fas fa-star-half-alt"></i>
+                        }
+                        else
+                        {
+                            <i class="far fa-star"></i>
+                        }
+                    }
+                    <span class="ms-2">(@Model.Rating)</span>
+                </div>
+
+                <!-- Price -->
+                <div class="mb-4">
+                    <span class="price-display">@Model.Price.ToString("C")</span>
+                </div>
+
+                <!-- Stock Status -->
+                <div class="mb-4">
+                    @if (Model.StockQuantity > 0)
+                    {
+                        <span class="stock-status @(Model.StockQuantity < 5 ? "low-stock" : "in-stock")">
+                            @(Model.StockQuantity < 5 ? $"Son {Model.StockQuantity} ürün!" : "Stokta")
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="stock-status out-of-stock">Stokta Yok</span>
+                    }
+                </div>
+
+                <!-- Add to Cart -->
+                <div class="d-flex gap-3 mb-4">
+                    <div class="input-group" style="width: 150px;">
+                        <button class="btn btn-outline-secondary" type="button" id="decreaseQuantity">-</button>
+                        <input type="number" class="form-control text-center" id="quantity" value="1" min="1" max="@Model.StockQuantity">
+                        <button class="btn btn-outline-secondary" type="button" id="increaseQuantity">+</button>
+                    </div>
+                    <button class="btn btn-modern" id="addToCart" @(Model.StockQuantity < 1 ? "disabled" : "")>
+                        <i class="fas fa-shopping-cart me-2"></i>Sepete Ekle
+                    </button>
+                    <button class="favorite-btn">
+                        <i class="far fa-heart"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Tabs -->
+        <div class="product-tabs mt-5">
+            <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="description-tab" data-bs-toggle="tab" href="#description" role="tab">
+                        Ürün Açıklaması
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="specs-tab" data-bs-toggle="tab" href="#specs" role="tab">
+                        Özellikler
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="comments-tab" data-bs-toggle="tab" href="#comments" role="tab">
+                        Yorumlar
+                    </a>
+                </li>
+            </ul>
+            <div class="tab-content mt-4" id="productTabsContent">
+                <!-- Description Tab -->
+                <div class="tab-pane fade show active" id="description" role="tabpanel">
+                    <p>@Model.Description</p>
+                </div>
+                
+                <!-- Specifications Tab -->
+                <div class="tab-pane fade" id="specs" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th>Ürün Kodu</th>
+                                    <td>@Model.Id</td>
+                                </tr>
+                                <tr>
+                                    <th>Stok Durumu</th>
+                                    <td>@Model.StockQuantity adet</td>
+                                </tr>
+                                <!-- Add more specifications as needed -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Comments Tab -->
+                <div class="tab-pane fade" id="comments" role="tabpanel">
+                    <!-- Add Comment Form -->
+                    <div class="mb-4">
+                        <h4>Yorum Yap</h4>
+                        <form id="commentForm">
+                            <div class="mb-3">
+                                <label for="rating" class="form-label">Puanınız</label>
+                                <div class="rating-input">
+                                    @for (int i = 5; i >= 1; i--)
+                                    {
+                                        <input type="radio" id="star@(i)" name="rating" value="@i" />
+                                        <label for="star@(i)"><i class="far fa-star"></i></label>
+                                    }
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Yorumunuz</label>
+                                <textarea class="form-control" id="comment" rows="3" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-modern">Yorum Yap</button>
+                        </form>
+                    </div>
+
+                    <!-- Comments List -->
+                    <div id="commentsList">
+                        <!-- Sample Comment -->
+                        <div class="comment">
+                            <div class="comment-header">
+                                <div>
+                                    <strong>Ahmet Y.</strong>
+                                    <div class="rating">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="far fa-star"></i>
+                                    </div>
+                                </div>
+                                <small class="text-muted">2 gün önce</small>
+                            </div>
+                            <p>Harika bir ürün, çok memnun kaldım!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Quantity controls
+        const quantityInput = document.getElementById('quantity');
+        const decreaseBtn = document.getElementById('decreaseQuantity');
+        const increaseBtn = document.getElementById('increaseQuantity');
+        const maxQuantity = @Model.StockQuantity;
+
+        decreaseBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+            }
+        });
+
+        increaseBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue < maxQuantity) {
+                quantityInput.value = currentValue + 1;
+            }
+        });
+
+        // Add to Cart
+        document.getElementById('addToCart').addEventListener('click', function() {
+            const quantity = parseInt(quantityInput.value);
+            // Add your cart logic here
+            showToast(`${quantity} adet ürün sepete eklendi!`);
+        });
+
+        // Favorite button
+        document.querySelector('.favorite-btn').addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            icon.classList.toggle('far');
+            icon.classList.toggle('fas');
+            icon.classList.toggle('text-danger');
+            showToast('Favorilere eklendi!');
+        });
+
+        // Comment form
+        document.getElementById('commentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const rating = document.querySelector('input[name="rating"]:checked')?.value;
+            const comment = document.getElementById('comment').value;
+            
+            if (rating && comment) {
+                // Add your comment submission logic here
+                showToast('Yorumunuz başarıyla eklendi!');
+                this.reset();
+            }
+        });
+
+        // Rating input interaction
+        document.querySelectorAll('.rating-input label').forEach(label => {
+            label.addEventListener('mouseover', function() {
+                const stars = document.querySelectorAll('.rating-input label');
+                const currentStar = parseInt(this.getAttribute('for').replace('star', ''));
+                
+                stars.forEach((star, index) => {
+                    const starValue = 5 - index;
+                    const icon = star.querySelector('i');
+                    if (starValue <= currentStar) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                    } else {
+                        icon.classList.remove('fas');
+                        icon.classList.add('far');
+                    }
+                });
+            });
+        });
+
+        // Toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            
+            const container = document.querySelector('.toast-container') || (() => {
+                const cont = document.createElement('div');
+                cont.className = 'toast-container';
+                document.body.appendChild(cont);
+                return cont;
+            })();
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+} 

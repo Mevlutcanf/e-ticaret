@@ -1,82 +1,125 @@
 @model List<e_ticaret.Models.CartItem>
+@using System.Globalization
 @{
     ViewData["Title"] = "Sepetim";
+    var culture = new CultureInfo("tr-TR");
 }
 
-<style>
-    .page-content {
-        min-height: calc(100vh - 180px);
-        /* footer ve navbar yüksekliğini çıkarıyoruz */
-        display: flex;
-        flex-direction: column;
-    }
+<div class="container mt-5 pt-4">
+    <h2 class="mb-4">Alışveriş Sepetim</h2>
 
-    .content-wrapper {
-        flex: 1;
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-shopping-cart me-2"></i>Sepetiniz boş.
+            <a href="@Url.Action("Index")" class="alert-link">Alışverişe devam edin</a>
+        </div>
     }
-</style>
-
-<div class="page-content">
-    <div class="content-wrapper">
-        <div class="container my-5">
-            <h2>Sepetim</h2>
-            @if (!Model.Any())
-            {
-                <div class="alert alert-info">Sepetiniz boş.</div>
-            }
-            else
-            {
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Ürün</th>
-                            <th>Açıklama</th>
-                            <th>Adet</th>
-                            <th>Birim Fiyat</th>
-                            <th>Toplam</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+    else
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
                         @foreach (var item in Model)
                         {
-                            <tr>
-                                <td class="align-middle">
-                                    <div class="d-flex align-items-center">
-                                        <img src="@item.Product?.ImageUrl" class="img-thumbnail me-3"
-                                            style="width: 80px; height: 80px; object-fit: cover;" />
-                                        <strong>@item.Product?.Name</strong>
+                            <div class="cart-item mb-3 pb-3 border-bottom">
+                                <div class="row align-items-center">
+                                    <div class="col-md-2">
+                                        <img src="@item.Product?.ImageUrl" alt="@item.Product?.Name" 
+                                             class="img-fluid rounded">
                                     </div>
-                                </td>
-                                <td>@item.Product?.Description</td>
-                                <td>@item.Quantity</td>
-                                <td>₺@(item.Product?.Price)</td>
-                                <td>₺@(item.Product != null ? item.Product.Price * item.Quantity : 0)</td>
-                            </tr>
+                                    <div class="col-md-4">
+                                        <h5 class="mb-1">@item.Product?.Name</h5>
+                                        <p class="text-muted mb-0">@item.Product?.Category</p>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="quantity-control">
+                                            <select class="form-select quantity-select" 
+                                                    data-product-id="@item.ProductId" 
+                                                    data-stock="@item.Product?.StockQuantity">
+                                                @{
+                                                    var maxQuantity = Math.Min(item.Product?.StockQuantity ?? 0, 10);
+                                                    for (int i = 1; i <= maxQuantity; i++)
+                                                    {
+                                                        if (i == item.Quantity)
+                                                        {
+                                                            <option value="@i" selected>@i</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@i">@i</option>
+                                                        }
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <span class="price">@string.Format(culture, "{0:F2} ₺", item.Product?.Price * item.Quantity)</span>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <form asp-action="RemoveFromCart" method="post" style="display: inline;">
+                                            <input type="hidden" name="productId" value="@item.ProductId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         }
-                    </tbody>
-                </table>
-                <div class="text-end fw-bold">
-                    @{
-                        var total = Model.Sum(x => x.Product != null ? x.Product.Price * x.Quantity : 0);
-                    }
-                    Toplam: ₺@total
-                </div>
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-primary">
-                            <i class="bi bi-arrow-left me-2"></i>Alışverişe Devam Et
-                        </a>
                     </div>
-                    <div class="col-md-6 text-end">
-                        <div class="mb-3">
-                            <h3>Toplam: ₺@total</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Sipariş Özeti</h5>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Ara Toplam</span>
+                            <span>@string.Format(culture, "{0:F2} ₺", Model.Sum(x => x.Product?.Price * x.Quantity))</span>
                         </div>
-                        <a href="@Url.Action("OdemeYap", "Home")" class="btn btn-success btn-lg">
-                            <i class="bi bi-credit-card me-2"></i>Ödemeye Geç
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Kargo</span>
+                            <span>Ücretsiz</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-4">
+                            <strong>Toplam</strong>
+                            <strong>@string.Format(culture, "{0:F2} ₺", Model.Sum(x => x.Product?.Price * x.Quantity))</strong>
+                        </div>
+                        <a href="@Url.Action("OdemeYap")" class="btn btn-primary w-100 btn-lg">
+                            <i class="fas fa-credit-card me-2"></i>Ödeme Yap
                         </a>
                     </div>
                 </div>
-            }
+            </div>
         </div>
-    </div>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.quantity-select').change(function() {
+                var productId = $(this).data('product-id');
+                var quantity = $(this).val();
+                
+                $.ajax({
+                    url: '@Url.Action("UpdateCartQuantity")',
+                    type: 'POST',
+                    data: { productId: productId, quantity: quantity },
+                    success: function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert('Stok miktarını aşamazsınız.');
+                            location.reload();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}

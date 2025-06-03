@@ -1,138 +1,360 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.IO;
 using e_ticaret.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace e_ticaret.Data
 {
-    public static class ProductRepository
+    public class ProductRepository
     {
-        private static List<Product> _products = new List<Product>
+        private readonly ApplicationDbContext _context;
+
+        public ProductRepository(ApplicationDbContext context)
         {
-            new Product
+            _context = context;
+        }
+
+        public List<Product> GetAll()
+        {
+            var products = _context.Products
+                .OrderBy(p => p.Name)
+                .ToList();
+
+            if (!products.Any())
             {
-                Id = 1,
-                Name = "Gaming Laptop",
-                Description = "16GB RAM, RTX 4060, i7 işlemci",
-                Price = 39999,
-                ImageUrl = "https://images.unsplash.com/photo-1605134513573-384dcf99a44c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",  // Gaming laptop
-                StockQuantity = 15,
-                Rating = 4.5
-            },
-            new Product
-            {
-                Id = 2,
-                Name = "Akıllı Telefon",
-                Description = "128GB, 8GB RAM, 108MP Kamera",
-                Price = 14999,
-                ImageUrl = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9",
-                StockQuantity = 25,
-                Rating = 4.8
-            },
-            new Product
-            {
-                Id = 3,
-                Name = "Kablosuz Kulaklık",
-                Description = "Aktif Gürültü Önleme, 30 Saat Pil",
-                Price = 2499,
-                ImageUrl = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
-                StockQuantity = 50,
-                Rating = 4.2
-            },
-            new Product
-            {
-                Id = 4,
-                Name = "4K Monitor",
-                Description = "32 inç, 144Hz, HDR",
-                Price = 12999,
-                ImageUrl = "https://plus.unsplash.com/premium_photo-1680721575441-18d5a0567269?q=80&w=2004&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",  // Monitor
-                StockQuantity = 10,
-                Rating = 4.7
-            },
-            new Product
-            {
-                Id = 5,
-                Name = "Mekanik Klavye",
-                Description = "RGB Aydınlatma, Blue Switch",
-                Price = 1899,
-                ImageUrl = "https://images.unsplash.com/photo-1601445638532-3c6f6c3aa1d6",  // Mekanik klavye
-                StockQuantity = 30,
-                Rating = 4.6
-            },
-            new Product
-            {
-                Id = 6,
-                Name = "Gamepad",
-                Description = "Drift hatası olmayacak şekilde tasarlandı",
-                Price = 899,
-                ImageUrl = "https://images.unsplash.com/photo-1712390978993-faa4edb44d48?q=80&w=1937&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-                StockQuantity = 45,
-                Rating = 4.3
-            },
-            new Product
-            {
-                Id = 7,
-                Name = "Webcam",
-                Description = "1080p Full HD, Gürültü Önleyici Mikrofon",
-                Price = 799,
-                ImageUrl = "https://images.unsplash.com/photo-1670278458296-00ff8a63141e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",  // Webcam
-                StockQuantity = 20,
-                Rating = 4.1
-            },
-            new Product
-            {
-                Id = 8,
-                Name = "Tablet",
-                Description = "10.4 inç, 64GB, Wifi",
-                Price = 4999,
-                ImageUrl = "https://images.unsplash.com/photo-1561154464-82e9adf32764",
-                StockQuantity = 15,
-                Rating = 4.6
-            },
-            new Product
-            {
-                Id = 9,
-                Name = "SSD Disk",
-                Description = "1TB, NVMe M.2",
-                Price = 1699,
-                ImageUrl = "https://plus.unsplash.com/premium_photo-1721133221361-4f2b2af3b6fe?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",  // SSD
-                StockQuantity = 50,
-                Rating = 4.8
+                // Add sample products if none exist
+                var sampleProducts = new List<Product>
+                {
+                    new Product
+                    {
+                        Name = "Gaming Laptop",
+                        Description = "16GB RAM, RTX 4060, i7 işlemci",
+                        Price = 39999,
+                        StockQuantity = 14,
+                        ImageUrl = "https://images.unsplash.com/photo-1605134513573-384dcf99a44c",
+                        Rating = 4.5M,
+                        Category = "Bilgisayar",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Akıllı Telefon",
+                        Description = "128GB, 8GB RAM, 108MP Kamera",
+                        Price = 14999,
+                        StockQuantity = 24,
+                        ImageUrl = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9",
+                        Rating = 4.8M,
+                        Category = "Telefon",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Kablosuz Kulaklık",
+                        Description = "Aktif Gürültü Önleme, 30 Saat Pil Ömrü",
+                        Price = 2499,
+                        StockQuantity = 35,
+                        ImageUrl = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
+                        Rating = 4.6M,
+                        Category = "Aksesuar",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "4K Smart TV",
+                        Description = "55 inç, HDR, Android TV",
+                        Price = 19999,
+                        StockQuantity = 8,
+                        ImageUrl = "https://images.unsplash.com/photo-1593784991095-a205069470b6",
+                        Rating = 4.7M,
+                        Category = "Televizyon",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Oyun Konsolu",
+                        Description = "1TB Depolama, 2 Kontrolcü",
+                        Price = 12999,
+                        StockQuantity = 15,
+                        ImageUrl = "https://images.unsplash.com/photo-1486401899868-0e435ed85128",
+                        Rating = 4.9M,
+                        Category = "Oyun",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Akıllı Saat",
+                        Description = "Nabız Ölçer, GPS, Su Geçirmez",
+                        Price = 3499,
+                        StockQuantity = 30,
+                        ImageUrl = "https://images.unsplash.com/photo-1546868871-7041f2a55e12",
+                        Rating = 4.4M,
+                        Category = "Aksesuar",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Drone",
+                        Description = "4K Kamera, 30dk Uçuş Süresi",
+                        Price = 8999,
+                        StockQuantity = 12,
+                        ImageUrl = "https://images.unsplash.com/photo-1507582020474-9a35b7d455d9",
+                        Rating = 4.6M,
+                        Category = "Elektronik",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Bluetooth Hoparlör",
+                        Description = "Su Geçirmez, 24 Saat Pil",
+                        Price = 1299,
+                        StockQuantity = 40,
+                        ImageUrl = "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1",
+                        Rating = 4.3M,
+                        Category = "Aksesuar",
+                        IsActive = true
+                    }
+                };
+
+                _context.Products.AddRange(sampleProducts);
+                _context.SaveChanges();
+                return sampleProducts;
             }
-        };
 
-        public static List<Product> GetAll() => _products;
-
-        public static bool UpdateStock(int productId, int quantity)
-        {
-            var product = _products.FirstOrDefault(p => p.Id == productId);
-            if (product == null || product.StockQuantity < quantity) return false;
-
-            product.StockQuantity -= quantity;
-            return true;
+            return products;
         }
 
-        public static Product? GetById(int id)
+        public Product? GetById(int id)
         {
-            return _products.FirstOrDefault(p => p.Id == id);
+            return _context.Products.Find(id);
         }
 
-        public static void Update(Product product)
+        public Product? GetProductById(int id)
         {
-            var existingProduct = GetById(product.Id);
+            return _context.Products.FirstOrDefault(p => p.Id == id);
+        }
+
+        public void Add(Product product)
+        {
+            _context.Products.Add(product);
+            _context.SaveChanges();
+        }
+
+        public void Update(Product product)
+        {
+            var existingProduct = _context.Products.Find(product.Id);
             if (existingProduct != null)
             {
                 existingProduct.Name = product.Name;
                 existingProduct.Description = product.Description;
+                existingProduct.Category = product.Category;
                 existingProduct.Price = product.Price;
-                existingProduct.ImageUrl = product.ImageUrl;
                 existingProduct.StockQuantity = product.StockQuantity;
+                existingProduct.ImageUrl = product.ImageUrl;
+                existingProduct.Rating = product.Rating;
+                existingProduct.IsActive = product.IsActive;
+
+                _context.SaveChanges();
             }
         }
 
-        public static void Add(Product product)
+        public void Delete(int id)
         {
-            product.Id = _products.Count > 0 ? _products.Max(p => p.Id) + 1 : 1;
-            _products.Add(product);
+            var product = _context.Products.Find(id);
+            if (product != null)
+            {
+                // Check if product is used in any orders
+                var hasOrders = _context.OrderItems.Any(oi => oi.ProductId == id);
+                if (hasOrders)
+                {
+                    // If product has orders, just mark it as out of stock
+                    product.StockQuantity = 0;
+                    _context.SaveChanges();
+                }
+                else
+                {
+                    _context.Products.Remove(product);
+                    _context.SaveChanges();
+                }
+            }
+        }
+
+        public bool UpdateStock(int id, int quantity, bool isDecrement = false)
+        {
+            var product = _context.Products.Find(id);
+            if (product == null) return false;
+
+            if (isDecrement)
+            {
+                if (product.StockQuantity < quantity) return false;
+                product.StockQuantity -= quantity;
+            }
+            else
+            {
+                product.StockQuantity = quantity;
+            }
+
+            _context.SaveChanges();
+            return true;
+        }
+
+        public List<Product> GetFeaturedProducts(int count = 8)
+        {
+            return _context.Products
+                .OrderByDescending(p => p.Rating)
+                .Take(count)
+                .ToList();
+        }
+
+        public List<Product> GetLowStockProducts(int threshold = 10)
+        {
+            return _context.Products
+                .Where(p => p.StockQuantity <= threshold)
+                .OrderBy(p => p.StockQuantity)
+                .ToList();
+        }
+
+        public List<Product> SearchProducts(string searchTerm)
+        {
+            return _context.Products
+                .Where(p => p.Name.Contains(searchTerm) || p.Description.Contains(searchTerm))
+                .OrderBy(p => p.Name)
+                .ToList();
+        }
+
+        public bool IsInStock(int id, int requestedQuantity = 1)
+        {
+            var product = _context.Products.Find(id);
+            return product != null && product.StockQuantity >= requestedQuantity;
+        }
+
+        public void DecrementStock(int id, int quantity = 1)
+        {
+            UpdateStock(id, quantity, true);
+        }
+
+        public void IncrementStock(int id, int quantity = 1)
+        {
+            var product = _context.Products.Find(id);
+            if (product != null)
+            {
+                product.StockQuantity += quantity;
+                _context.SaveChanges();
+            }
+        }
+
+        public decimal GetTotalInventoryValue()
+        {
+            return _context.Products.Sum(p => p.Price * p.StockQuantity);
+        }
+
+        public void InitializeProducts()
+        {
+            if (!_context.Products.Any())
+            {
+                var sampleProducts = new List<Product>
+                {
+                    new Product
+                    {
+                        Name = "Gaming Laptop",
+                        Description = "16GB RAM, RTX 4060, i7 işlemci",
+                        Price = 39999,
+                        StockQuantity = 14,
+                        ImageUrl = "https://images.unsplash.com/photo-1605134513573-384dcf99a44c",
+                        Rating = 4.5M,
+                        Category = "Bilgisayar",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Akıllı Telefon",
+                        Description = "128GB, 8GB RAM, 108MP Kamera",
+                        Price = 14999,
+                        StockQuantity = 24,
+                        ImageUrl = "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9",
+                        Rating = 4.8M,
+                        Category = "Telefon",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Kablosuz Kulaklık",
+                        Description = "Aktif Gürültü Önleme, 30 Saat Pil Ömrü",
+                        Price = 2499,
+                        StockQuantity = 35,
+                        ImageUrl = "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
+                        Rating = 4.6M,
+                        Category = "Aksesuar",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "4K Smart TV",
+                        Description = "55 inç, HDR, Android TV",
+                        Price = 19999,
+                        StockQuantity = 8,
+                        ImageUrl = "https://images.unsplash.com/photo-1593784991095-a205069470b6",
+                        Rating = 4.7M,
+                        Category = "Televizyon",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Oyun Konsolu",
+                        Description = "1TB Depolama, 2 Kontrolcü",
+                        Price = 12999,
+                        StockQuantity = 15,
+                        ImageUrl = "https://images.unsplash.com/photo-1486401899868-0e435ed85128",
+                        Rating = 4.9M,
+                        Category = "Oyun",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Akıllı Saat",
+                        Description = "Nabız Ölçer, GPS, Su Geçirmez",
+                        Price = 3499,
+                        StockQuantity = 30,
+                        ImageUrl = "https://images.unsplash.com/photo-1546868871-7041f2a55e12",
+                        Rating = 4.4M,
+                        Category = "Aksesuar",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Drone",
+                        Description = "4K Kamera, 30dk Uçuş Süresi",
+                        Price = 8999,
+                        StockQuantity = 12,
+                        ImageUrl = "https://images.unsplash.com/photo-1507582020474-9a35b7d455d9",
+                        Rating = 4.6M,
+                        Category = "Elektronik",
+                        IsActive = true
+                    },
+                    new Product
+                    {
+                        Name = "Bluetooth Hoparlör",
+                        Description = "Su Geçirmez, 24 Saat Pil",
+                        Price = 1299,
+                        StockQuantity = 40,
+                        ImageUrl = "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1",
+                        Rating = 4.3M,
+                        Category = "Aksesuar",
+                        IsActive = true
+                    }
+                };
+
+                _context.Products.AddRange(sampleProducts);
+                _context.SaveChanges();
+            }
+        }
+
+        public void ClearAllProducts()
+        {
+            var products = _context.Products.ToList();
+            _context.Products.RemoveRange(products);
+            _context.SaveChanges();
         }
     }
 }

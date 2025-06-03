@@ -1,16 +1,18 @@
 ﻿@using e_ticaret.Data
 @using e_ticaret.Extensions
 @using e_ticaret.Models
+@inject UserRepository _userRepository
 
 <!DOCTYPE html>
 <html lang="tr">
 
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Tekno Market</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <style>
         body {
             background: #f8f9fa;
@@ -84,170 +86,122 @@
             }
         }
     </style>
-    @RenderSection("Styles", required: false)
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="/">Tekno Market</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Index">Ana Sayfa</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Ürünler</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" asp-controller="Home" asp-action="Sepetim">
-                            <i class="bi bi-cart3"></i> Sepetim
-                        </a>
-                    </li>
-                    @if (Context.Session.GetString("UserId") != null)
-                    {
-                        var userId = Context.Session.GetString("UserId");
-                        var user = userId != null ? UserRepository.GetById(int.Parse(userId)) : null;
-
-                        @if (user?.IsAdmin == true)
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3 fixed-top">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="~/">
+                    <i class="fas fa-laptop-code me-2"></i>Tekno Market
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home me-1"></i>Ana Sayfa
+                            </a>
+                        </li>
+                        @if (User.Identity.IsAuthenticated)
                         {
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">
+                                        <i class="fas fa-cog me-1"></i>Admin Panel
+                                    </a>
+                                </li>
+                            }
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Admin" asp-action="Index">
-                                    <i class="bi bi-gear-fill"></i> Admin Panel
+                                <a class="nav-link text-dark" asp-controller="Home" asp-action="Sepetim">
+                                    <i class="fas fa-shopping-cart me-1"></i>Sepetim
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <span class="nav-link text-dark">
+                                    <i class="fas fa-user me-1"></i>@(User.Identity?.Name ?? "")
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Çıkış Yap
                                 </a>
                             </li>
                         }
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle"></i> @(user?.FullName ?? "Kullanıcı")
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Profil</a></li>
-                                <li><a class="dropdown-item" asp-controller="Home"
-                                        asp-action="Siparislerim">Siparişlerim</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Çıkış Yap</a></li>
-                            </ul>
-                        </li>
-                    }
-                    else
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Account" asp-action="Login">
-                                <i class="bi bi-person"></i> Giriş Yap
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Account" asp-action="Register">
-                                <i class="bi bi-person-plus"></i> Kayıt Ol
-                            </a>
-                        </li>
-                    }
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sol Reklam Alanı - Sadece ana sayfada göster -->
-            @if (ViewContext.RouteData.Values["controller"].ToString() == "Home" && 
-                 ViewContext.RouteData.Values["action"].ToString() == "Index")
-            {
-                <div class="col-md-2 d-none d-lg-block">
-                    <div class="ad-sidebar">
-                        <div class="card border-primary ad-card">
-                            <div class="card-body text-center">
-                                <h6 class="card-title text-primary">Özel Fırsat!</h6>
-                                <small class="text-muted d-block mb-2">Seçili Ürünlerde</small>
-                                <span class="display-6 text-danger">%20</span>
-                                <small class="d-block text-muted mt-2">İndirim</small>
-                            </div>
-                        </div>
-                        <div class="card bg-light ad-card">
-                            <div class="card-body text-center p-2">
-                                <i class="bi bi-truck text-success"></i>
-                                <small class="d-block text-muted">500₺ Üzeri Kargo Bedava</small>
-                            </div>
-                        </div>
-                    </div>
+                    </ul>
+                    <ul class="navbar-nav">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link">Hoş geldin, @(User.Identity?.Name ?? "")</span>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Giriş Yap
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">
+                                    <i class="fas fa-user-plus me-1"></i>Kayıt Ol
+                                </a>
+                            </li>
+                        }
+                    </ul>
                 </div>
-            }
-
-            <!-- Ana İçerik - Sayfa durumuna göre genişlik ayarla -->
-            <div class="@(ViewContext.RouteData.Values["controller"].ToString() == "Home" && 
-                         ViewContext.RouteData.Values["action"].ToString() == "Index" ? "col-md-8" : "col-md-12")">
-                @RenderBody()
             </div>
+        </nav>
+    </header>
 
-            <!-- Sağ Sepet Özeti - Sadece ana sayfada ve giriş yapmış kullanıcılara göster -->
-            @if (Context.Session.GetString("UserId") != null && 
-                 ViewContext.RouteData.Values["controller"].ToString() == "Home" && 
-                 ViewContext.RouteData.Values["action"].ToString() == "Index")
-            {
-                <div class="col-md-2 d-none d-lg-block">
-                    <div class="position-sticky" style="top: 80px;">
-                        <div class="card">
-                            <div class="card-header bg-primary text-white">
-                                <i class="bi bi-cart3"></i> Sepetim
-                            </div>
-                            <div class="card-body">
-                                @{
-                                    var cart = Context.Session.GetObject<List<CartItem>>("cart");
-                                    var total = cart?.Sum(x => x.Product != null ? x.Product.Price * x.Quantity : 0) ?? 0;
-                                }
-                                @if (cart == null || !cart.Any())
-                                {
-                                    <p class="text-muted text-center mb-0">Sepetiniz boş</p>
-                                }
-                                else
-                                {
-                                    foreach (var item in cart)
-                                    {
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <small>@item.Product?.Name x @item.Quantity</small>
-                                            <small class="text-primary">₺@(item.Product != null ? item.Product.Price * item.Quantity : 0)</small>
-                                        </div>
-                                    }
-                                    <hr>
-                                    <div class="d-flex justify-content-between">
-                                        <strong>Toplam:</strong>
-                                        <strong class="text-primary">₺@total</strong>
-                                    </div>
-                                    <a href="@Url.Action("Sepetim", "Home")" class="btn btn-primary btn-sm w-100 mt-3">
-                                        Sepete Git
-                                    </a>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
     </div>
 
-    <footer class="bg-primary text-white py-3 mt-5">
+    <footer class="border-top footer text-muted">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start">
-                    &copy; @DateTime.Now.Year Tekno Market. Tüm hakları saklıdır.
+            <div class="row">
+                <div class="col-md-4">
+                    <h5>İletişim</h5>
+                    <p><i class="fas fa-phone me-2"></i>0536 715 1292</p>
+                    <p><i class="fas fa-envelope me-2"></i>mevlut201mevlut@gmail.com</p>
+                    <p><i class="fas fa-map-marker-alt me-2"></i>Ankara, Türkiye</p>
                 </div>
-                <div class="col-md-6 text-center text-md-end">
-                    <small>MF Software tarafından geliştirilmektedir</small>
+                <div class="col-md-4">
+                    <h5>Hızlı Bağlantılar</h5>
+                    <ul class="list-unstyled">
+                        <li><a asp-controller="Home" asp-action="Index">Ana Sayfa</a></li>
+                        <li><a asp-controller="Home" asp-action="Urunler">Ürünler</a></li>
+                        <li><a asp-controller="Home" asp-action="About">Hakkımızda</a></li>
+                        <li><a asp-controller="Home" asp-action="Contact">İletişim</a></li>
+                    </ul>
                 </div>
+                <div class="col-md-4">
+                    <h5>Bizi Takip Edin</h5>
+                    <div class="social-links">
+                        <a href="#" class="me-3"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="me-3"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                &copy; 2024 E-Ticaret - Tüm hakları saklıdır.
             </div>
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    @RenderSection("Scripts", required: false)
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 
 </html>

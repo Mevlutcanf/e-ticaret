@@ -3,78 +3,162 @@
     ViewData["Title"] = "Sipariş Detayı";
 }
 
-<div class="container my-5">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h3>Sipariş #@Model.OrderNumber</h3>
-            <span
-                class="badge bg-@(Model.OrderStatus == "Tamamlandı" ? "success" : "warning")">@Model.OrderStatus</span>
-        </div>
-        <div class="card-body">
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <h5>Müşteri Bilgileri</h5>
-                    <p><strong>Ad Soyad:</strong> @ViewBag.UserFullName</p>
-                    <p><strong>Adres:</strong> @Model.Address</p>
-                    <p><strong>Şehir:</strong> @Model.City</p>
-                    <p><strong>Posta Kodu:</strong> @Model.PostalCode</p>
-                </div>
-                <div class="col-md-6">
-                    <h5>Sipariş Bilgileri</h5>
-                    <p><strong>Tarih:</strong> @Model.OrderDate.ToString("dd.MM.yyyy HH:mm")</p>
-                    <p><strong>Toplam Tutar:</strong> ₺@Model.TotalAmount</p>
-                    <form method="post" asp-action="UpdateOrderStatus" asp-controller="Admin" class="mt-3">
-                        <input type="hidden" name="id" value="@Model.Id" />
-                        <div class="input-group">
-                            <select name="status" class="form-select">
-                                @{
-                                    var statuses = new[] { "Hazırlanıyor", "Kargoya Verildi", "Teslim Edildi", "İptal Edildi" };
-                                    foreach (var status in statuses)
-                                    {
-                                        <option value="@status" selected="@(Model.OrderStatus == status)">@status</option>
-                                    }
-                                }
-                            </select>
-                            <button type="submit" class="btn btn-primary">Durumu Güncelle</button>
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Sipariş Detayı #@Model.OrderNumber</h6>
+                        <div>
+                            <a href="@Url.Action("Orders")" class="btn btn-secondary btn-sm">
+                                <i class="bi bi-arrow-left"></i> Geri
+                            </a>
                         </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder">Müşteri Bilgileri</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <span class="text-dark font-weight-bold">Ad Soyad:</span>
+                                    <span class="text-sm">@Model.User?.FullName</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="text-dark font-weight-bold">Email:</span>
+                                    <span class="text-sm">@Model.User?.Email</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder">Sipariş Bilgileri</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <span class="text-dark font-weight-bold">Sipariş Tarihi:</span>
+                                    <span class="text-sm">@Model.OrderDate.ToString("dd.MM.yyyy HH:mm")</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="text-dark font-weight-bold">Durum:</span>
+                                    <span class="badge bg-@GetStatusColor(Model.OrderStatus)">@Model.OrderStatus</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="text-dark font-weight-bold">Toplam Tutar:</span>
+                                    <span class="text-sm">₺@Model.TotalAmount.ToString("N2")</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
 
-            <h5>Sipariş Detayı</h5>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Ürün</th>
-                        <th>Birim Fiyat</th>
-                        <th>Miktar</th>
-                        <th>Toplam</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model.Items)
-                    {
-                        <tr>
-                            <td>@item.Product?.Name</td>
-                            <td>₺@item.Product?.Price</td>
-                            <td>@item.Quantity</td>
-                            <td>₺@(item.Product != null ? item.Product.Price * item.Quantity : 0)</td>
-                        </tr>
-                    }
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3" class="text-end"><strong>Toplam:</strong></td>
-                        <td><strong>₺@Model.TotalAmount</strong></td>
-                    </tr>
-                </tfoot>
-            </table>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Teslimat Bilgileri</h6>
+                            <div class="card">
+                                <div class="card-body">
+                                    <p class="mb-1"><strong>Adres:</strong> @Model.Address</p>
+                                    <p class="mb-1"><strong>Şehir:</strong> @Model.City</p>
+                                    <p class="mb-0"><strong>Posta Kodu:</strong> @Model.PostalCode</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            <div class="mt-3">
-                <a href="@Url.Action("Index", "Admin")" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Geri Dön
-                </a>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Sipariş Durumu Güncelle</h6>
+                            <form asp-action="UpdateOrderStatus" method="post" class="row g-3">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <div class="col-md-6">
+                                    <select name="status" class="form-select" required>
+                                        <option value="Hazırlanıyor" selected="@(Model.OrderStatus == "Hazırlanıyor")">Hazırlanıyor</option>
+                                        <option value="Kargoya Verildi" selected="@(Model.OrderStatus == "Kargoya Verildi")">Kargoya Verildi</option>
+                                        <option value="Teslim Edildi" selected="@(Model.OrderStatus == "Teslim Edildi")">Teslim Edildi</option>
+                                        <option value="İptal Edildi" selected="@(Model.OrderStatus == "İptal Edildi")">İptal Edildi</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-uppercase text-body text-xs font-weight-bolder">Ürünler</h6>
+                            <div class="table-responsive">
+                                <table class="table align-items-center mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ürün</th>
+                                            <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Birim Fiyat</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Adet</th>
+                                            <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Toplam</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.Items)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex px-2 py-1">
+                                                        <div>
+                                                            <img src="@item.Product?.ImageUrl" class="avatar avatar-sm me-3" alt="@item.ProductName">
+                                                        </div>
+                                                        <div class="d-flex flex-column justify-content-center">
+                                                            <h6 class="mb-0 text-sm">@item.ProductName</h6>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <p class="text-xs font-weight-bold mb-0">₺@item.Price.ToString("N2")</p>
+                                                </td>
+                                                <td class="align-middle text-center">
+                                                    <span class="text-secondary text-xs font-weight-bold">@item.Quantity</span>
+                                                </td>
+                                                <td class="align-middle text-center">
+                                                    <span class="text-secondary text-xs font-weight-bold">₺@((item.Price * item.Quantity).ToString("N2"))</span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Styles {
+    <style>
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .list-group-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+}
+
+@functions {
+    string GetStatusColor(string status)
+    {
+        return status.ToLower() switch
+        {
+            "hazırlanıyor" => "info",
+            "kargoya verildi" => "primary",
+            "teslim edildi" => "success",
+            "iptal edildi" => "danger",
+            _ => "secondary"
+        };
+    }
+}

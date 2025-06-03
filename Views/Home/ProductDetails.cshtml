@@ -1,0 +1,100 @@
+@model e_ticaret.Models.Product
+@{
+    ViewData["Title"] = "Ürün Detayı";
+}
+
+<div class="container mt-5 pt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="product-image-container">
+                <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid rounded shadow product-image">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h2 class="mb-3">@Model.Name</h2>
+            <div class="rating mb-3">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    if (i <= Math.Floor(Model.Rating))
+                    {
+                        <i class="fas fa-star text-warning"></i>
+                    }
+                    else if (i - Model.Rating < 1 && i - Model.Rating > 0)
+                    {
+                        <i class="fas fa-star-half-alt text-warning"></i>
+                    }
+                    else
+                    {
+                        <i class="far fa-star text-warning"></i>
+                    }
+                }
+                <span class="ms-2">(@Model.Rating)</span>
+            </div>
+            <p class="lead mb-4">@Model.Description</p>
+            <div class="price-container mb-4">
+                <h3 class="text-primary">@Model.Price.ToString("C")</h3>
+                <span class="stock-status @(Model.StockQuantity > 0 ? "text-success" : "text-danger")">
+                    @(Model.StockQuantity > 0 ? $"Stokta {Model.StockQuantity} adet var" : "Stokta yok")
+                </span>
+            </div>
+            @if (Model.StockQuantity > 0)
+            {
+                <form asp-controller="Home" asp-action="AddToCart" method="post" class="mb-4">
+                    <input type="hidden" name="productId" value="@Model.Id" />
+                    <div class="d-flex align-items-center mb-3">
+                        <label class="me-3">Adet:</label>
+                        <select name="quantity" class="form-select" style="width: 100px;">
+                            @for (int i = 1; i <= Math.Min(Model.StockQuantity, 10); i++)
+                            {
+                                <option value="@i">@i</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-cart me-2"></i>Sepete Ekle
+                    </button>
+                </form>
+            }
+            else
+            {
+                <button class="btn btn-secondary btn-lg" disabled>
+                    <i class="fas fa-times me-2"></i>Stokta Yok
+                </button>
+            }
+            <div class="product-info mt-4">
+                <h4>Ürün Bilgileri</h4>
+                <ul class="list-unstyled">
+                    <li><strong>Kategori:</strong> @Model.Category</li>
+                    <li><strong>Ürün Kodu:</strong> #@Model.Id</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .product-image-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        .stock-status {
+            font-size: 0.9rem;
+            display: block;
+            margin-top: 5px;
+        }
+        
+        .rating {
+            font-size: 1.2rem;
+        }
+    </style>
+} 

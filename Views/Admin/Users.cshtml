@@ -1,0 +1,179 @@
+@model List<e_ticaret.Models.User>
+@{
+    ViewData["Title"] = "Kullanıcı Yönetimi";
+}
+
+<div class="container-fluid py-4" style="margin-top: 70px;">
+    <div class="admin-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">Kullanıcı Yönetimi</h5>
+            <div class="d-flex gap-2">
+                <div class="search-bar" style="width: 300px;">
+                    <input type="text" id="userSearch" class="form-control" placeholder="Kullanıcı ara...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Kullanıcı</th>
+                        <th>Email</th>
+                        <th>Kayıt Tarihi</th>
+                        <th>Rol</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-placeholder me-3">
+                                        @user.FullName.Substring(0, 1)
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">@user.FullName</h6>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@user.Email</td>
+                            <td>@user.CreatedAt.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="badge bg-@(user.IsAdmin ? "primary" : "secondary")">
+                                    @(user.IsAdmin ? "Admin" : "Kullanıcı")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="userStatus_@user.Id" 
+                                           @(user.IsActive ? "checked" : "")
+                                           onchange="toggleUserStatus(@user.Id)">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="viewUserOrders(@user.Id)">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteUser(@user.Id)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- User Orders Modal -->
+<div class="modal fade modal-modern" id="userOrdersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Kullanıcı Siparişleri</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="userOrdersList">
+                    <!-- Orders will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .avatar-placeholder {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .form-switch .form-check-input {
+            width: 2.5em;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // User search functionality
+        const userSearch = document.getElementById('userSearch');
+        const userRows = document.querySelectorAll('tbody tr');
+
+        userSearch.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            userRows.forEach(row => {
+                const userName = row.querySelector('h6').textContent.toLowerCase();
+                const userEmail = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                
+                if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // User management functions
+        function toggleUserStatus(userId) {
+            // Implement user status toggle
+            showToast('Kullanıcı durumu güncellendi!');
+        }
+
+        function viewUserOrders(userId) {
+            // Implement view user orders
+            const modal = new bootstrap.Modal(document.getElementById('userOrdersModal'));
+            modal.show();
+            showToast('Sipariş detayları yükleniyor...');
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) {
+                // Implement delete functionality
+                showToast('Silme özelliği yakında eklenecek!');
+            }
+        }
+
+        // Toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            
+            const container = document.querySelector('.toast-container') || (() => {
+                const cont = document.createElement('div');
+                cont.className = 'toast-container';
+                document.body.appendChild(cont);
+                return cont;
+            })();
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+} 

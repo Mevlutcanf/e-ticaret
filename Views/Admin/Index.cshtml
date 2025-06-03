@@ -1,155 +1,363 @@
+@model e_ticaret.ViewModels.AdminDashboardViewModel
 @{
     ViewData["Title"] = "Admin Panel";
 }
 
-<div class="container my-5">
-    <h2>Admin Dashboard</h2>
+<div class="container-fluid py-4" style="margin-top: 70px;">
+    <!-- Statistics Cards -->
+    <div class="admin-stats">
+        <div class="stat-card">
+            <i class="fas fa-box-open fa-2x mb-2"></i>
+            <h3>@Model.Products.Count</h3>
+            <p class="mb-0">Toplam Ürün</p>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-users fa-2x mb-2"></i>
+            <h3>@Model.UserCount</h3>
+            <p class="mb-0">Kayıtlı Kullanıcı</p>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+            <h3>@Model.OrderCount</h3>
+            <p class="mb-0">Toplam Sipariş</p>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-box fa-2x mb-2"></i>
+            <h3>@Model.LowStockCount</h3>
+            <p class="mb-0">Az Kalan Ürünler</p>
+        </div>
+    </div>
 
-    <!-- İstatistik Kartları -->
-    <div class="row mt-4">
-        <div class="col-md-3 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5>Toplam Sipariş</h5>
-                    <h2>@ViewBag.OrderCount</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5>Toplam Kullanıcı</h5>
-                    <h2>@ViewBag.UserCount</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h5>Toplam Ürün</h5>
-                    <h2>@ViewBag.ProductCount</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <h5>Toplam Gelir</h5>
-                    <h2>₺@ViewBag.TotalRevenue</h2>
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="admin-card">
+                <h5 class="mb-3">Hızlı İşlemler</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-modern" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="fas fa-plus me-2"></i>Yeni Ürün Ekle
+                    </button>
+                    <button class="btn btn-modern" onclick="location.href='@Url.Action("Users", "Admin")'">
+                        <i class="fas fa-users me-2"></i>Kullanıcıları Yönet
+                    </button>
+                    <button class="btn btn-modern" onclick="location.href='@Url.Action("Orders", "Admin")'">
+                        <i class="fas fa-shopping-cart me-2"></i>Siparişleri Görüntüle
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Hızlı İşlemler -->
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Son Siparişler</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Sipariş No</th>
-                                    <th>Müşteri</th>
-                                    <th>Tutar</th>
-                                    <th>Durum</th>
-                                    <th>İşlem</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var order in ViewBag.RecentOrders)
-                                {
-                                    <tr>
-                                        <td>@order.OrderNumber</td>
-                                        <td>@order.UserFullName</td>
-                                        <td>₺@order.TotalAmount</td>
-                                        <td><span
-                                                class="badge bg-@(order.OrderStatus == "Tamamlandı" ? "success" : "warning")">@order.OrderStatus</span>
-                                        </td>
-                                        <td>
-                                            <a href="@Url.Action("OrderDetail", "Admin", new { id = order.Id })"
-                                                class="btn btn-sm btn-info">Detay</a>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+    <!-- Products Management -->
+    <div class="row">
+        <div class="col-12">
+            <div class="admin-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">Ürün Yönetimi</h5>
+                    <div class="d-flex gap-2">
+                        <div class="search-bar" style="width: 300px;">
+                            <input type="text" id="productSearch" class="form-control" placeholder="Ürün ara...">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
                     </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Ürün</th>
+                                <th>Fiyat</th>
+                                <th>Stok</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in Model.Products)
+                            {
+                                <tr data-product-id="@product.Id">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="@product.ImageUrl" alt="@product.Name" 
+                                                 style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                            <div class="ms-3">
+                                                <h6 class="mb-0">@product.Name</h6>
+                                                <small class="text-muted">@product.Description</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>@product.Price.ToString("C")</td>
+                                    <td>@product.StockQuantity</td>
+                                    <td>
+                                        <span class="badge bg-@(product.StockQuantity > 0 ? "success" : "danger")">
+                                            @(product.StockQuantity > 0 ? "Stokta" : "Tükendi")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary me-2" onclick="editProduct(@product.Id)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(@product.Id)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Stok Durumu</h5>
-                    <a href="@Url.Action("AddProduct", "Admin")" class="btn btn-sm btn-success">
-                        <i class="bi bi-plus"></i> Yeni Ürün Ekle
-                    </a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="admin-card">
+                <h5 class="mb-4">Son Siparişler</h5>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Sipariş No</th>
+                                <th>Müşteri</th>
+                                <th>Tutar</th>
+                                <th>Durum</th>
+                                <th>Tarih</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model.RecentOrders)
+                            {
                                 <tr>
-                                    <th>Ürün ID</th>
-                                    <th>Ürün</th>
-                                    <th>Fiyat</th>
-                                    <th>Stok</th>
-                                    <th>Durum</th>
-                                    <th>İşlemler</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var product in ViewBag.AllProducts)
-                                {
-                                    <tr>
-                                        <td>@product.Id</td>
-                                        <td>@product.Name</td>
-                                        <td>₺@product.Price</td>
-                                        <td>@product.StockQuantity</td>
-                                        <td>
-                                            @if (product.StockQuantity == 0)
-                                            {
-                                                <span class="badge bg-danger">Tükendi</span>
-                                            }
-                                            else if (product.StockQuantity < 5)
-                                            {
-                                                <span class="badge bg-danger">Kritik</span>
-                                            }
-                                            else if (product.StockQuantity < 10)
-                                            {
-                                                <span class="badge bg-warning">Az</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-success">Yeterli</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <a href="@Url.Action("EditProduct", "Admin", new { id = product.Id })"
-                                                    class="btn btn-sm btn-warning">Düzenle</a>
-                                                <a href="@Url.Action("UpdateStock", "Admin", new { id = product.Id })"
-                                                    class="btn btn-sm btn-info">Stok Güncelle</a>
+                                    <td>#@order.OrderNumber</td>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">@(order.User?.FullName ?? "Silinmiş Kullanıcı")</h6>
+                                                <p class="text-xs text-secondary mb-0">@(order.User?.Email ?? "N/A")</p>
                                             </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                                        </div>
+                                    </td>
+                                    <td>@order.TotalAmount.ToString("C")</td>
+                                    <td>
+                                        <span class="badge bg-@(order.OrderStatus == "Tamamlandı" ? "success" : 
+                                                               order.OrderStatus == "İşleniyor" ? "warning" : "info")">
+                                            @order.OrderStatus
+                                        </span>
+                                    </td>
+                                    <td>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                onclick="viewOrderDetails(@order.Id)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Add Product Modal -->
+<div class="modal fade modal-modern" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Yeni Ürün Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProductForm" method="post" action="@Url.Action("UrunEkle", "Admin")">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Ürün Adı</label>
+                        <input type="text" name="Name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea name="Description" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select name="Category" class="form-control" required>
+                            <option value="Bilgisayar">Bilgisayar</option>
+                            <option value="Telefon">Telefon</option>
+                            <option value="Tablet">Tablet</option>
+                            <option value="Aksesuar">Aksesuar</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fiyat</label>
+                        <input type="number" name="Price" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stok Miktarı</label>
+                        <input type="number" name="StockQuantity" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ürün Görseli</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="imageFile" accept="image/*">
+                            <span class="input-group-text">veya</span>
+                            <input type="text" name="ImageUrl" class="form-control" placeholder="Görsel URL'si">
+                        </div>
+                        <small class="text-muted">Dosya yükleyebilir veya görsel URL'si girebilirsiniz</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Değerlendirme</label>
+                        <input type="number" name="Rating" class="form-control" step="0.1" min="0" max="5" value="5">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-modern" onclick="submitProduct()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Product search functionality
+        const productSearch = document.getElementById('productSearch');
+        const productRows = document.querySelectorAll('tbody tr');
+
+        productSearch?.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            productRows.forEach(row => {
+                const productName = row.querySelector('h6').textContent.toLowerCase();
+                const productDesc = row.querySelector('small').textContent.toLowerCase();
+                
+                if (productName.includes(searchTerm) || productDesc.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Product management functions
+        function editProduct(id) {
+            window.location.href = '/admin/products/' + id;
+        }
+
+        function deleteProduct(id) {
+            if (confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
+                fetch('/admin/products/' + id, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                }).then(response => {
+                    if (response.ok) {
+                        const row = document.querySelector(`tr[data-product-id="${id}"]`);
+                        if (row) {
+                            row.remove();
+                        }
+                        showToast('Ürün başarıyla silindi');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast('Ürün silinirken bir hata oluştu');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    showToast('Ürün silinirken bir hata oluştu');
+                });
+            }
+        }
+
+        function viewOrderDetails(id) {
+            window.location.href = '/admin/orders/' + id;
+        }
+
+        function submitProduct() {
+            const form = document.getElementById('addProductForm');
+            const formData = new FormData(form);
+            
+            fetch('/admin/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            }).then(response => {
+                if (response.ok) {
+                    showToast('Ürün başarıyla eklendi');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Ürün eklenirken bir hata oluştu');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                showToast('Ürün eklenirken bir hata oluştu');
+            });
+        }
+
+        // Toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast show';
+            toast.style.position = 'fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.backgroundColor = '#333';
+            toast.style.color = 'white';
+            toast.style.padding = '15px 25px';
+            toast.style.borderRadius = '4px';
+            toast.style.zIndex = '1050';
+            
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+}
+
+@section Styles {
+    <style>
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .icon-shape {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+        }
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #43A047 0%, #66BB6A 100%);
+        }
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #FB8C00 0%, #FFA726 100%);
+        }
+        .bg-gradient-info {
+            background: linear-gradient(135deg, #039BE5 0%, #29B6F6 100%);
+        }
+    </style>
+}
 
 
 
 
-           
+

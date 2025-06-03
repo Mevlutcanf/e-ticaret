@@ -1,5 +1,6 @@
 @model e_ticaret.Models.User
 @using e_ticaret.Data
+@inject OrderRepository _orderRepository
 @{
     ViewData["Title"] = "Profil";
 }
@@ -38,7 +39,7 @@
                     <h4>Son Siparişleriniz</h4>
                     <hr>
                     @{
-                        var userOrders = OrderRepository.GetUserOrders(Model.Id.ToString()).Take(5);
+                        var userOrders = _orderRepository.GetUserOrders(Model.Id).Take(5);
                         
                         foreach (var order in userOrders)
                         {

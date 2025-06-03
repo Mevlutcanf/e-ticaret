@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\mevlut\\Desktop\\e-ticaret\\e-ticaret.csproj": {}
+    "C:\\Users\\mevlut\\Desktop\\eticaretson\\e-ticaret\\e-ticaret.csproj": {}
   },
   "projects": {
-    "C:\\Users\\mevlut\\Desktop\\e-ticaret\\e-ticaret.csproj": {
+    "C:\\Users\\mevlut\\Desktop\\eticaretson\\e-ticaret\\e-ticaret.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\mevlut\\Desktop\\e-ticaret\\e-ticaret.csproj",
+        "projectUniqueName": "C:\\Users\\mevlut\\Desktop\\eticaretson\\e-ticaret\\e-ticaret.csproj",
         "projectName": "e-ticaret",
-        "projectPath": "C:\\Users\\mevlut\\Desktop\\e-ticaret\\e-ticaret.csproj",
+        "projectPath": "C:\\Users\\mevlut\\Desktop\\eticaretson\\e-ticaret\\e-ticaret.csproj",
         "packagesPath": "C:\\Users\\mevlut\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\mevlut\\Desktop\\e-ticaret\\obj\\",
+        "outputPath": "C:\\Users\\mevlut\\Desktop\\eticaretson\\e-ticaret\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -49,6 +49,28 @@
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
+          "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.5, )"
+            },
+            "Microsoft.EntityFrameworkCore.SQLite": {
+              "target": "Package",
+              "version": "[9.0.5, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.5, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

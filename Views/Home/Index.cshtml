@@ -74,43 +74,81 @@
 
 <main class="container">
     <h2 class="mb-4">Popüler Ürünler</h2>
-    <div class="row g-4">
-        @foreach (var urun in Model)
-        {
-            <div class="col-md-3 mb-4">
-                <div class="card product-card h-100">
-                    <a href="@Url.Action("UrunDetay", "Home", new { id = urun.Id })" class="text-decoration-none">
-                        <img src="@urun.ImageUrl" class="card-img-top" style="height: 200px; object-fit: cover;" alt="@urun.Name">
-                    </a>
-                    <div class="card-body d-flex flex-column">
-                        <a href="@Url.Action("UrunDetay", "Home", new { id = urun.Id })" class="text-decoration-none text-dark">
-                            <h5 class="card-title">@urun.Name</h5>
-                        </a>
-                        <p class="card-text">@urun.Description</p>
-                        <div class="text-warning mb-2">
-                            @for (var i = 1; i <= 5; i++)
-                            {
-                                <i class="bi bi-star-fill @(i <= urun.Rating ? "text-warning" : "text-secondary")"></i>
-                            }
-                            <small class="text-muted ms-1">(@urun.Rating.ToString("0.0"))</small>
+    <div class="container mt-4">
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Ürün ara..." class="form-control">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="category-filter mb-4">
+            <button class="btn btn-modern me-2 active" data-category="all">Tümü</button>
+            <button class="btn btn-modern me-2" data-category="elektronik">Elektronik</button>
+            <button class="btn btn-modern me-2" data-category="giyim">Giyim</button>
+            <button class="btn btn-modern" data-category="aksesuar">Aksesuar</button>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="row" id="productsContainer">
+            @foreach (var product in Model)
+            {
+                <div class="col-md-4 col-lg-3 mb-4 product-item">
+                    <div class="product-card">
+                        <div class="position-relative">
+                            <img src="@product.ImageUrl" alt="@product.Name" class="card-img-top">
+                            <button class="favorite-btn position-absolute top-0 end-0 m-2">
+                                <i class="far fa-heart"></i>
+                            </button>
                         </div>
-                        <div class="mt-auto">
-                            <div class="text-muted mb-2">Stok: @urun.StockQuantity</div>
+                        <div class="card-body">
+                            <h5 class="card-title">@product.Name</h5>
+                            <div class="rating mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= (double)product.Rating)
+                                    {
+                                        <i class="fas fa-star"></i>
+                                    }
+                                    else if (i - 0.5 <= (double)product.Rating)
+                                    {
+                                        <i class="fas fa-star-half-alt"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="far fa-star"></i>
+                                    }
+                                }
+                                <span class="ms-2">(@product.Rating)</span>
+                            </div>
+                            <div class="mb-3">
+                                @if (product.StockQuantity > 0)
+                                {
+                                    <span class="stock-status @(product.StockQuantity < 5 ? "low-stock" : "in-stock")">
+                                        @(product.StockQuantity < 5 ? "Son " + product.StockQuantity + " ürün!" : "Stokta")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="stock-status out-of-stock">Stokta Yok</span>
+                                }
+                            </div>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-bold text-primary">₺@urun.Price</span>
-                                <form asp-action="SepeteEkle" asp-controller="Home" method="post" class="m-0 p-0">
-                                    <input type="hidden" name="id" value="@urun.Id" />
-                                    <button type="submit" class="btn btn-sm btn-outline-primary" 
-                                            @(urun.StockQuantity < 1 ? "disabled" : "")>
-                                        @(urun.StockQuantity < 1 ? "Stokta Yok" : "Sepete Ekle")
-                                    </button>
-                                </form>
+                                <div class="price-display">
+                                    @product.Price.ToString("C")
+                                </div>
+                                <button type="button" class="btn btn-modern hemen-al-btn" 
+                                        data-product-id="@product.Id"
+                                        @(product.StockQuantity < 1 ? "disabled" : "")>
+                                    <i class="fas fa-shopping-cart me-2"></i>
+                                    @(product.StockQuantity < 1 ? "Stokta Yok" : "Hemen Al")
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     </div>
 
     <!-- Kampanya/duyuru alanı -->
@@ -127,4 +165,117 @@
         </div>
     </div>
 </main>
+
+@section Scripts {
+    <script>
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const productsContainer = document.getElementById('productsContainer');
+        const products = document.querySelectorAll('.product-item');
+
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            products.forEach(product => {
+                const title = product.querySelector('.card-title').textContent.toLowerCase();
+                if (title.includes(searchTerm)) {
+                    product.style.display = '';
+                } else {
+                    product.style.display = 'none';
+                }
+            });
+        });
+
+        // Favorite button functionality
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const icon = this.querySelector('i');
+                icon.classList.toggle('far');
+                icon.classList.toggle('fas');
+                icon.classList.toggle('text-danger');
+                
+                // Show toast notification
+                showToast('Favorilere eklendi!');
+            });
+        });
+
+        // Toast notification function
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            
+            const container = document.querySelector('.toast-container') || (() => {
+                const cont = document.createElement('div');
+                cont.className = 'toast-container';
+                document.body.appendChild(cont);
+                return cont;
+            })();
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Category filter functionality
+        document.querySelectorAll('.category-filter .btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelector('.category-filter .active').classList.remove('active');
+                this.classList.add('active');
+                
+                const category = this.dataset.category;
+                if (category === 'all') {
+                    products.forEach(product => product.style.display = '');
+                } else {
+                    products.forEach(product => {
+                        const productCategory = product.dataset.category;
+                        product.style.display = productCategory === category ? '' : 'none';
+                    });
+                }
+            });
+        });
+
+        // Handle direct purchase
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.hemen-al-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const productId = this.getAttribute('data-product-id');
+                    const originalText = this.innerHTML;
+                    
+                    // Disable button and show loading
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>İşleniyor...';
+
+                    // Add to cart and redirect to payment
+                    fetch(`/Home/HemenAl?productId=${productId}`, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = '/Home/OdemeYap';
+                        } else {
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                            alert(data.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                        alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+                    });
+                });
+            });
+        });
+    </script>
+}
 

@@ -1,88 +1,126 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using e_ticaret.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace e_ticaret.Data
 {
-    public static class UserRepository
+    public class UserRepository
     {
-        private static string UsersFilePath = "users.json";
-        private static List<User> _users = new();
+        private readonly ApplicationDbContext _context;
 
-        static UserRepository()
+        public UserRepository(ApplicationDbContext context)
         {
-            LoadUsers();
-            if (!_users.Any(u => u.IsAdmin))
+            _context = context;
+        }
+
+        public List<User> GetAll()
+        {
+            var users = _context.Users
+                .Include(u => u.Orders)
+                .ToList();
+
+            if (!users.Any())
             {
-                // Varsayılan admin kullanıcısı oluştur
-                Add(new User
+                // Add admin user if no users exist
+                var adminUser = new User
                 {
-                    Email = "admin@admin.com",
-                    Password = "admin123",
-                    FullName = "Admin",
-                    IsAdmin = true
-                });
+                    FullName = "Admin User",
+                    Email = "admin@example.com",
+                    Password = "123",
+                    IsAdmin = true,
+                    CreatedAt = DateTime.Now
+                };
+
+                _context.Users.Add(adminUser);
+                _context.SaveChanges();
+                return new List<User> { adminUser };
             }
+
+            return users;
         }
 
-        private static void LoadUsers()
+        public User? GetById(int id)
         {
-            if (File.Exists(UsersFilePath))
+            return _context.Users
+                .Include(u => u.Orders)
+                .FirstOrDefault(u => u.Id == id);
+        }
+
+        public User? GetByEmail(string email)
+        {
+            return _context.Users
+                .Include(u => u.Orders)
+                .FirstOrDefault(u => u.Email == email);
+        }
+
+        public void Add(User user)
+        {
+            user.CreatedAt = DateTime.Now;
+            _context.Users.Add(user);
+            _context.SaveChanges();
+        }
+
+        public void Update(User user)
+        {
+            _context.Users.Update(user);
+            _context.SaveChanges();
+        }
+
+        public void Delete(int id)
+        {
+            var user = _context.Users.Find(id);
+            if (user != null)
             {
-                var json = File.ReadAllText(UsersFilePath);
-                _users = JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
+                // Delete associated orders first
+                var orders = _context.Orders.Where(o => o.UserId == id);
+                _context.Orders.RemoveRange(orders);
+
+                _context.Users.Remove(user);
+                _context.SaveChanges();
             }
-            else
-            {
-                _users = new List<User>();
-            }
         }
 
-        private static void SaveUsers()
+        public bool ValidateCredentials(string email, string password)
         {
-            var json = JsonSerializer.Serialize(_users);
-            File.WriteAllText(UsersFilePath, json);
+            var user = GetByEmail(email);
+            if (user == null) return false;
+            return user.Password == password;
         }
 
-        public static User? GetByEmail(string email)
+        public bool IsEmailUnique(string email)
         {
-            return _users.FirstOrDefault(u => u.Email.ToLower() == email.ToLower());
+            return !_context.Users.Any(u => u.Email == email);
         }
 
-        public static bool Add(User user)
+        public List<User> GetTopCustomers(int count = 5)
         {
-            if (GetByEmail(user.Email) != null)
-                return false;
-
-            user.Id = _users.Count + 1;
-            _users.Add(user);
-            SaveUsers();
-            return true;
+            return _context.Users
+                .Include(u => u.Orders)
+                .OrderByDescending(u => u.Orders.Count)
+                .Take(count)
+                .ToList();
         }
 
-        public static User? GetById(int id)
+        public decimal GetTotalSpentByUser(int userId)
         {
-            return _users.FirstOrDefault(u => u.Id == id);
+            return _context.Orders
+                .Where(o => o.UserId == userId)
+                .Sum(o => o.TotalAmount);
         }
 
-        public static bool Update(User updatedUser)
+        public void ClearAllNonAdminUsers()
         {
-            var existingUser = GetById(updatedUser.Id);
-            if (existingUser == null) return false;
-
-            existingUser.FullName = updatedUser.FullName;
-            existingUser.Email = updatedUser.Email;
-            if (!string.IsNullOrEmpty(updatedUser.Password))
-            {
-                existingUser.Password = updatedUser.Password;
-            }
-
-            SaveUsers();
-            return true;
+            var nonAdminUsers = _context.Users.Where(u => !u.IsAdmin).ToList();
+            _context.Users.RemoveRange(nonAdminUsers);
+            _context.SaveChanges();
         }
 
-        public static List<User> GetAll()
+        public User? GetUserByEmailAndPassword(string email, string password)
         {
-            return _users.ToList();
+            return _context.Users.FirstOrDefault(u => u.Email == email && u.Password == password);
         }
     }
 }
