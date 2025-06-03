@@ -21,7 +21,7 @@ Bu proje esasında hala betadadır. Bazı özellikler çalışmayabilir veyahut 
 
 1. Projeyi klonlayın
 ```bash
-git clone [proje-url]
+git clone [[proje-url]](https://github.com/Mevlutcanf/e-ticaret.git)
 ```
 
 2. Gerekli NuGet paketlerini yükleyin
